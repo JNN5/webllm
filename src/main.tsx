@@ -72,7 +72,9 @@ const router = createBrowserRouter([
     path: "/",
     element: <App />,
   },
-])
+], {
+  basename: import.meta.env.PROD ? "/webllm" : undefined,
+})
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
