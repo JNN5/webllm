@@ -143,97 +143,116 @@ CRITICAL INSTRUCTIONS:
           if (deltaContent) {
             fullResponse += deltaContent
 
-            // Just show the raw response during streaming
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === botMessageId ? { 
-                  ...msg, 
-                  text: fullResponse,
-                  isStreaming: true
-                } : msg,
-              ),
-            )
-          }
-        }
+            // Try to parse as JSON during streaming for real-time updates
+            let currentParsed: any = null
+            let jsonToparse = fullResponse.trim()
 
-        // After streaming is complete, try to parse as JSON for structured responses
-        try {
-          // First, try to extract JSON from the response if it's mixed format
-          let jsonToparse = fullResponse.trim()
-          
-          // Look for JSON object in the response
-          const jsonMatch = fullResponse.match(/\{[\s\S]*\}/)
-          if (jsonMatch) {
-            jsonToparse = jsonMatch[0]
-            console.log('Extracted JSON from mixed format response:', jsonToparse)
-          }
-          
-          const parsed = JSON.parse(jsonToparse)
-          console.log('Parsed JSON response:', parsed)
-          
-          if (parsed.thinking && Array.isArray(parsed.thinking)) {
-            currentThinking = parsed.thinking.map((step: string, index: number) => ({
-              id: `${botMessageId}-thinking-${index}`,
-              content: step,
-              timestamp: Date.now()
-            }))
-          }
+            // Look for JSON object in the response
+            const jsonMatch = fullResponse.match(/\{[\s\S]*\}/)
+            if (jsonMatch) {
+              jsonToparse = jsonMatch[0]
 
-          if (parsed.tool_calls && Array.isArray(parsed.tool_calls)) {
-            console.log('Executing tools:', parsed.tool_calls)
-            currentToolCalls = []
-            
-            for (const toolCall of parsed.tool_calls) {
-              const toolCallId = `${botMessageId}-tool-${currentToolCalls.length}`
-              
               try {
-                console.log(`Executing tool: ${toolCall.name}`, toolCall.arguments)
-                const result = await executeTool(toolCall.name, toolCall.arguments)
-                console.log(`Tool result:`, result)
-                currentToolCalls.push({
-                  id: toolCallId,
-                  name: toolCall.name,
-                  arguments: toolCall.arguments,
-                  result: result.result,
-                  error: result.success ? undefined : result.error
-                })
-              } catch (error) {
-                console.error(`Tool execution error:`, error)
-                currentToolCalls.push({
-                  id: toolCallId,
-                  name: toolCall.name,
-                  arguments: toolCall.arguments,
-                  error: error instanceof Error ? error.message : 'Unknown error'
-                })
+                currentParsed = JSON.parse(jsonToparse)
+                console.log('Progressive parsing successful:', currentParsed)
+
+                // Update thinking in real-time
+                if (currentParsed.thinking && Array.isArray(currentParsed.thinking)) {
+                  currentThinking = currentParsed.thinking.map(
+                    (step: string, index: number) => ({
+                      id: `${botMessageId}-thinking-${index}`,
+                      content: step,
+                      timestamp: Date.now(),
+                    }),
+                  )
+                }
+
+                // Execute tools when tool_calls array is complete
+                if (currentParsed.tool_calls && Array.isArray(currentParsed.tool_calls)) {
+                  console.log('Tool calls detected, executing:', currentParsed.tool_calls)
+
+                  // Only execute if we haven't executed these tools yet
+                  if (currentToolCalls.length === 0) {
+                    for (const toolCall of currentParsed.tool_calls) {
+                      const toolCallId = `${botMessageId}-tool-${currentToolCalls.length}`
+
+                      try {
+                        console.log(`Executing tool: ${toolCall.name}`, toolCall.arguments)
+                        const result = await executeTool(toolCall.name, toolCall.arguments)
+                        console.log(`Tool result:`, result)
+                        currentToolCalls.push({
+                          id: toolCallId,
+                          name: toolCall.name,
+                          arguments: toolCall.arguments,
+                          result: result.result,
+                          error: result.success ? undefined : result.error,
+                        })
+                      } catch (error) {
+                        console.error(`Tool execution error:`, error)
+                        currentToolCalls.push({
+                          id: toolCallId,
+                          name: toolCall.name,
+                          arguments: toolCall.arguments,
+                          error: error instanceof Error ? error.message : 'Unknown error',
+                        })
+                      }
+                    }
+                  }
+                }
+
+                // Update with parsed content
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === botMessageId
+                      ? {
+                          ...msg,
+                          text: currentParsed?.response || currentParsed?.content || 'Processing...',
+                          thinking: currentThinking,
+                          toolCalls: currentToolCalls,
+                          isStreaming: true,
+                        }
+                      : msg,
+                  ),
+                )
+              } catch (parseError) {
+                // JSON not complete yet, show raw response with current progress
+                setMessages((prev) =>
+                  prev.map((msg) =>
+                    msg.id === botMessageId
+                      ? {
+                          ...msg,
+                          text: fullResponse,
+                          thinking: currentThinking,
+                          toolCalls: currentToolCalls,
+                          isStreaming: true,
+                        }
+                      : msg,
+                  ),
+                )
               }
+            } else {
+              // No JSON detected yet, show raw response
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === botMessageId
+                    ? {
+                        ...msg,
+                        text: fullResponse,
+                        isStreaming: true,
+                      }
+                    : msg,
+                ),
+              )
             }
           }
-
-          // Update the bot message with structured response
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === botMessageId ? {
-                ...msg,
-                text: parsed.response || parsed.content || 'Tool execution completed',
-                thinking: currentThinking,
-                toolCalls: currentToolCalls,
-                isStreaming: false
-              } : msg,
-            ),
-          )
-        } catch (parseError) {
-          console.log('Not JSON format, treating as regular text')
-          // Not valid JSON, treat as regular text response
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === botMessageId ? { 
-                ...msg, 
-                text: fullResponse,
-                isStreaming: false
-              } : msg,
-            ),
-          )
         }
+
+        // Final update - mark as not streaming
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId ? { ...msg, isStreaming: false } : msg,
+          ),
+        )
 
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to send message')
