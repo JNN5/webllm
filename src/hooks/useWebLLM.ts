@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
-import * as webllm from '@mlc-ai/web-llm'
+import { useCallback, useState } from 'react'
 
 export interface ChatMessage {
   id: string
@@ -10,11 +9,37 @@ export interface ChatMessage {
 }
 
 export function useWebLLM() {
-  const [engine, setEngine] = useState<webllm.MLCEngine | null>(null)
+  const [engine, setEngine] = useState<any | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const [isInitialized, setIsInitialized] = useState(false)
   const [messages, setMessages] = useState<Array<ChatMessage>>([])
   const [error, setError] = useState<string | null>(null)
+  const [webllmModule, setWebllmModule] = useState<any>(null)
+
+  const preloadWebLLM = useCallback(async () => {
+    if (webllmModule) return
+    
+    try {
+      // Just preload the module without setting it to state to avoid triggering re-renders
+      await import('@mlc-ai/web-llm')
+    } catch (err) {
+      // Silently fail on preload - we'll handle errors during actual initialization
+      console.warn('Failed to preload WebLLM:', err)
+    }
+  }, [webllmModule])
+
+  const loadWebLLM = useCallback(async () => {
+    if (webllmModule) return webllmModule
+    
+    try {
+      const module = await import('@mlc-ai/web-llm')
+      setWebllmModule(module)
+      return module
+    } catch (err) {
+      setError('Failed to load WebLLM library')
+      throw err
+    }
+  }, [webllmModule])
 
   const initEngine = useCallback(async () => {
     if (engine || isLoading) return
@@ -23,6 +48,7 @@ export function useWebLLM() {
     setError(null)
 
     try {
+      const webllm = await loadWebLLM()
       const chatEngine = new webllm.MLCEngine()
 
       // await chatEngine.reload('Llama-3.2-3B-Instruct-q4f32_1-MLC')
@@ -48,7 +74,7 @@ export function useWebLLM() {
     } finally {
       setIsLoading(false)
     }
-  }, [engine, isLoading])
+  }, [engine, isLoading, loadWebLLM])
 
   const sendMessage = useCallback(
     async (text: string, user: string) => {
@@ -129,5 +155,6 @@ export function useWebLLM() {
     error,
     initEngine,
     sendMessage,
+    preloadWebLLM,
   }
 }

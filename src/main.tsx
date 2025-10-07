@@ -1,8 +1,31 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import ReactDOM from 'react-dom/client'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
-import WebLLMChatArea from './components/WebLLMChatArea'
+import { Loader2, Bot } from 'lucide-react'
 import './styles.css'
+
+// Lazy load the WebLLM component to reduce initial bundle size
+const WebLLMChatArea = lazy(() => import('./components/WebLLMChatArea'))
+
+// Loading component for the WebLLM chat area
+function WebLLMLoading() {
+  return (
+    <div className="flex flex-col items-center justify-center h-full space-y-6 p-8">
+      <div className="relative">
+        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#fca311] to-[#ff9500] flex items-center justify-center">
+          <Bot size={32} className="text-[#14213d]" />
+        </div>
+        <Loader2 size={24} className="absolute -top-1 -right-1 text-[#fca311] animate-spin" />
+      </div>
+      <div className="text-center space-y-2">
+        <h3 className="text-xl font-semibold text-white">Loading Chat Interface...</h3>
+        <p className="text-white/70">
+          Preparing WebLLM components
+        </p>
+      </div>
+    </div>
+  )
+}
 
 function HomePage() {
   return (
@@ -20,7 +43,9 @@ function HomePage() {
       {/* Main Chat Interface */}
       <div className="w-full max-w-4xl flex-1 flex flex-col min-h-0">
         <div className="chat-container flex-1 flex flex-col p-6">
-          <WebLLMChatArea />
+          <Suspense fallback={<WebLLMLoading />}>
+            <WebLLMChatArea />
+          </Suspense>
         </div>
       </div>
 

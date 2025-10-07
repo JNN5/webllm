@@ -52,7 +52,7 @@ function Message({ message, currentUser }: MessageProps) {
 }
 
 export default function WebLLMChatArea() {
-  const { isLoading, isInitialized, messages, error, initEngine, sendMessage } =
+  const { isLoading, isInitialized, messages, error, initEngine, sendMessage, preloadWebLLM } =
     useWebLLM()
   const [inputMessage, setInputMessage] = useState('')
   const [user, setUser] = useState('You')
@@ -90,6 +90,7 @@ export default function WebLLMChatArea() {
         </div>
         <button
           onClick={initEngine}
+          onMouseEnter={preloadWebLLM}
           disabled={isLoading}
           className="glass-btn-primary text-lg px-8 py-4 flex items-center gap-2"
         >
