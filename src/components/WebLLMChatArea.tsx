@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useWebLLM } from '@/hooks/useWebLLM'
+import { useWebLLM } from '../hooks/useWebLLM'
 import { Send, Bot, User, Loader2 } from 'lucide-react'
 
 interface MessageProps {

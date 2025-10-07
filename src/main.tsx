@@ -1,9 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
-import WebLLMChatArea from '../components/WebLLMChatArea'
-
-export const Route = createFileRoute('/')({
-  component: HomePage,
-})
+import React from 'react'
+import ReactDOM from 'react-dom/client'
+import { RouterProvider, createBrowserRouter } from 'react-router-dom'
+import WebLLMChatArea from './components/WebLLMChatArea'
+import './styles.css'
 
 function HomePage() {
   return (
@@ -34,3 +33,24 @@ function HomePage() {
     </div>
   )
 }
+
+function App() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-[#14213d] via-[#1a2a4a] to-[#0f1b36]">
+      <HomePage />
+    </div>
+  )
+}
+
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+  },
+])
+
+ReactDOM.createRoot(document.getElementById('root')!).render(
+  <React.StrictMode>
+    <RouterProvider router={router} />
+  </React.StrictMode>,
+)
