@@ -224,27 +224,37 @@ export async function executeTool(toolName: string, args: Record<string, any>) {
 }
 
 export function getToolsPrompt(): string {
-  return `You have access to the following tools:
+  return `You are an AI assistant with access to browser-based tools. You MUST always respond with valid JSON in the exact format specified below.
 
+Available tools:
 ${browserTools.map(tool => `**${tool.name}**: ${tool.description}
 Parameters: ${JSON.stringify(tool.parameters, null, 2)}`).join('\n\n')}
 
-To use a tool, respond with a JSON object in this format:
+CRITICAL: You MUST ALWAYS respond with a valid JSON object. Never respond with plain text.
+
+For requests that need tools:
 {
-  "thinking": ["step 1 of reasoning", "step 2 of reasoning"],
+  "thinking": ["I need to analyze this request", "This requires using X tool", "Let me call the tool with these parameters"],
   "tool_calls": [
     {
       "name": "tool_name",
       "arguments": { "param": "value" }
     }
   ],
-  "response": "Your response to the user after using tools"
+  "response": "Your response to the user explaining what you did"
 }
 
-If you don't need tools, just respond normally but you can still include thinking steps:
+For requests that don't need tools:
 {
-  "thinking": ["reasoning step 1", "reasoning step 2"],
-  "response": "Your normal response"
+  "thinking": ["Let me think about this", "This is a straightforward question", "I can answer directly"],
+  "response": "Your direct answer to the user"
 }
-`
+
+IMPORTANT RULES:
+1. ALWAYS respond with valid JSON only
+2. ALWAYS include "thinking" array with your reasoning steps
+3. Use "tool_calls" array only when tools are needed
+4. ALWAYS include "response" with your final answer
+5. Never include any text outside the JSON object
+6. Think step by step in the "thinking" array`
 }

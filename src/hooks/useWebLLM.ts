@@ -121,7 +121,12 @@ export function useWebLLM() {
 
 ${getToolsPrompt()}
 
-Always think through your response step by step, and use tools when they would be helpful.`
+CRITICAL INSTRUCTIONS:
+- You MUST respond ONLY with valid JSON
+- Never include any text before or after the JSON object
+- Always think through your response step-by-step in the "thinking" array
+- Use tools when they would be helpful to answer the user's request
+- Be concise but thorough in your reasoning`
 
         const messages = [
           { role: 'system', content: systemPrompt },
@@ -138,77 +143,87 @@ Always think through your response step by step, and use tools when they would b
           if (deltaContent) {
             fullResponse += deltaContent
 
-            // Try to parse as JSON for structured responses
-            try {
-              const parsed = JSON.parse(fullResponse)
-              
-              if (parsed.thinking && Array.isArray(parsed.thinking)) {
-                currentThinking = parsed.thinking.map((step: string, index: number) => ({
-                  id: `${botMessageId}-thinking-${index}`,
-                  content: step,
-                  timestamp: Date.now()
-                }))
-              }
-
-              if (parsed.tool_calls && Array.isArray(parsed.tool_calls)) {
-                currentToolCalls = []
-                
-                for (const toolCall of parsed.tool_calls) {
-                  const toolCallId = `${botMessageId}-tool-${currentToolCalls.length}`
-                  
-                  try {
-                    const result = await executeTool(toolCall.name, toolCall.arguments)
-                    currentToolCalls.push({
-                      id: toolCallId,
-                      name: toolCall.name,
-                      arguments: toolCall.arguments,
-                      result: result.result,
-                      error: result.success ? undefined : result.error
-                    })
-                  } catch (error) {
-                    currentToolCalls.push({
-                      id: toolCallId,
-                      name: toolCall.name,
-                      arguments: toolCall.arguments,
-                      error: error instanceof Error ? error.message : 'Unknown error'
-                    })
-                  }
-                }
-              }
-
-              // Update the bot message with structured response
-              setMessages((prev) =>
-                prev.map((msg) =>
-                  msg.id === botMessageId ? {
-                    ...msg,
-                    text: parsed.response || parsed.content || fullResponse,
-                    thinking: currentThinking,
-                    toolCalls: currentToolCalls,
-                    isStreaming: true
-                  } : msg,
-                ),
-              )
-            } catch {
-              // Not valid JSON yet, continue streaming as regular text
-              setMessages((prev) =>
-                prev.map((msg) =>
-                  msg.id === botMessageId ? { 
-                    ...msg, 
-                    text: fullResponse,
-                    isStreaming: true
-                  } : msg,
-                ),
-              )
-            }
+            // Just show the raw response during streaming
+            setMessages((prev) =>
+              prev.map((msg) =>
+                msg.id === botMessageId ? { 
+                  ...msg, 
+                  text: fullResponse,
+                  isStreaming: true
+                } : msg,
+              ),
+            )
           }
         }
 
-        // Final update - mark as not streaming
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.id === botMessageId ? { ...msg, isStreaming: false } : msg,
-          ),
-        )
+        // After streaming is complete, try to parse as JSON for structured responses
+        try {
+          const parsed = JSON.parse(fullResponse)
+          console.log('Parsed JSON response:', parsed)
+          
+          if (parsed.thinking && Array.isArray(parsed.thinking)) {
+            currentThinking = parsed.thinking.map((step: string, index: number) => ({
+              id: `${botMessageId}-thinking-${index}`,
+              content: step,
+              timestamp: Date.now()
+            }))
+          }
+
+          if (parsed.tool_calls && Array.isArray(parsed.tool_calls)) {
+            console.log('Executing tools:', parsed.tool_calls)
+            currentToolCalls = []
+            
+            for (const toolCall of parsed.tool_calls) {
+              const toolCallId = `${botMessageId}-tool-${currentToolCalls.length}`
+              
+              try {
+                console.log(`Executing tool: ${toolCall.name}`, toolCall.arguments)
+                const result = await executeTool(toolCall.name, toolCall.arguments)
+                console.log(`Tool result:`, result)
+                currentToolCalls.push({
+                  id: toolCallId,
+                  name: toolCall.name,
+                  arguments: toolCall.arguments,
+                  result: result.result,
+                  error: result.success ? undefined : result.error
+                })
+              } catch (error) {
+                console.error(`Tool execution error:`, error)
+                currentToolCalls.push({
+                  id: toolCallId,
+                  name: toolCall.name,
+                  arguments: toolCall.arguments,
+                  error: error instanceof Error ? error.message : 'Unknown error'
+                })
+              }
+            }
+          }
+
+          // Update the bot message with structured response
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId ? {
+                ...msg,
+                text: parsed.response || parsed.content || fullResponse,
+                thinking: currentThinking,
+                toolCalls: currentToolCalls,
+                isStreaming: false
+              } : msg,
+            ),
+          )
+        } catch (parseError) {
+          console.log('Not JSON format, treating as regular text')
+          // Not valid JSON, treat as regular text response
+          setMessages((prev) =>
+            prev.map((msg) =>
+              msg.id === botMessageId ? { 
+                ...msg, 
+                text: fullResponse,
+                isStreaming: false
+              } : msg,
+            ),
+          )
+        }
 
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to send message')
