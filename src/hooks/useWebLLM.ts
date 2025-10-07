@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import { type ToolCall, type ThinkingStep } from '../utils/tools'
 
 export interface ChatMessage {
   id: string
@@ -6,6 +7,9 @@ export interface ChatMessage {
   user: string
   timestamp: number
   isBot?: boolean
+  thinking?: ThinkingStep[]
+  toolCalls?: ToolCall[]
+  isStreaming?: boolean
 }
 
 export function useWebLLM() {
@@ -100,14 +104,32 @@ export function useWebLLM() {
           user: 'Assistant',
           timestamp: Date.now(),
           isBot: true,
+          thinking: [],
+          toolCalls: [],
+          isStreaming: true,
         }
 
         setMessages((prev) => [...prev, botMessage])
 
         let fullResponse = ''
+        let currentThinking: ThinkingStep[] = []
+        let currentToolCalls: ToolCall[] = []
+
+        // Enhanced prompt with tool calling capabilities
+        const { executeTool, getToolsPrompt } = await import('../utils/tools')
+        const systemPrompt = `You are a helpful AI assistant with access to browser-based tools.
+
+${getToolsPrompt()}
+
+Always think through your response step by step, and use tools when they would be helpful.`
+
+        const messages = [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: text.trim() }
+        ]
 
         const asyncChunkGenerator = await engine.chat.completions.create({
-          messages: [{ role: 'user', content: text.trim() }],
+          messages,
           stream: true,
         })
 
@@ -116,14 +138,78 @@ export function useWebLLM() {
           if (deltaContent) {
             fullResponse += deltaContent
 
-            // Update the bot message with streaming response
-            setMessages((prev) =>
-              prev.map((msg) =>
-                msg.id === botMessageId ? { ...msg, text: fullResponse } : msg,
-              ),
-            )
+            // Try to parse as JSON for structured responses
+            try {
+              const parsed = JSON.parse(fullResponse)
+              
+              if (parsed.thinking && Array.isArray(parsed.thinking)) {
+                currentThinking = parsed.thinking.map((step: string, index: number) => ({
+                  id: `${botMessageId}-thinking-${index}`,
+                  content: step,
+                  timestamp: Date.now()
+                }))
+              }
+
+              if (parsed.tool_calls && Array.isArray(parsed.tool_calls)) {
+                currentToolCalls = []
+                
+                for (const toolCall of parsed.tool_calls) {
+                  const toolCallId = `${botMessageId}-tool-${currentToolCalls.length}`
+                  
+                  try {
+                    const result = await executeTool(toolCall.name, toolCall.arguments)
+                    currentToolCalls.push({
+                      id: toolCallId,
+                      name: toolCall.name,
+                      arguments: toolCall.arguments,
+                      result: result.result,
+                      error: result.success ? undefined : result.error
+                    })
+                  } catch (error) {
+                    currentToolCalls.push({
+                      id: toolCallId,
+                      name: toolCall.name,
+                      arguments: toolCall.arguments,
+                      error: error instanceof Error ? error.message : 'Unknown error'
+                    })
+                  }
+                }
+              }
+
+              // Update the bot message with structured response
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === botMessageId ? {
+                    ...msg,
+                    text: parsed.response || parsed.content || fullResponse,
+                    thinking: currentThinking,
+                    toolCalls: currentToolCalls,
+                    isStreaming: true
+                  } : msg,
+                ),
+              )
+            } catch {
+              // Not valid JSON yet, continue streaming as regular text
+              setMessages((prev) =>
+                prev.map((msg) =>
+                  msg.id === botMessageId ? { 
+                    ...msg, 
+                    text: fullResponse,
+                    isStreaming: true
+                  } : msg,
+                ),
+              )
+            }
           }
         }
+
+        // Final update - mark as not streaming
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId ? { ...msg, isStreaming: false } : msg,
+          ),
+        )
+
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to send message')
         console.error('Message send error:', err)

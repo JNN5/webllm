@@ -1,15 +1,12 @@
 import { useState } from 'react'
-import { useWebLLM } from '../hooks/useWebLLM'
+import { useWebLLM, type ChatMessage } from '../hooks/useWebLLM'
 import { Send, Bot, User, Loader2 } from 'lucide-react'
+import { ThinkingSection, ToolCallsSection } from './ThinkingComponents'
+import { ExamplePrompts } from './ExamplePrompts'
+import ReactMarkdown from 'react-markdown'
 
 interface MessageProps {
-  message: {
-    id: string
-    text: string
-    user: string
-    timestamp: number
-    isBot?: boolean
-  }
+  message: ChatMessage
   currentUser: string
 }
 
@@ -42,9 +39,24 @@ function Message({ message, currentUser }: MessageProps) {
           <span className="text-xs opacity-60 ml-auto">
             {new Date(message.timestamp).toLocaleTimeString()}
           </span>
+          {message.isStreaming && (
+            <Loader2 size={12} className="text-[#fca311] animate-spin" />
+          )}
         </div>
+        
+        {/* Thinking Section */}
+        {message.thinking && message.thinking.length > 0 && (
+          <ThinkingSection thinking={message.thinking} />
+        )}
+        
+        {/* Tool Calls Section */}
+        {message.toolCalls && message.toolCalls.length > 0 && (
+          <ToolCallsSection toolCalls={message.toolCalls} />
+        )}
+        
+        {/* Main Response */}
         <div className="whitespace-pre-wrap break-words leading-relaxed">
-          {message.text}
+          <ReactMarkdown>{message.text}</ReactMarkdown>
         </div>
       </div>
     </div>
@@ -62,6 +74,10 @@ export default function WebLLMChatArea() {
       sendMessage(inputMessage, user)
       setInputMessage('')
     }
+  }
+
+  const handleSelectPrompt = (prompt: string) => {
+    setInputMessage(prompt)
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -133,16 +149,11 @@ export default function WebLLMChatArea() {
       {/* Messages Area */}
       <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 min-h-0">
         {messages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full space-y-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#fca311] to-[#ff9500] flex items-center justify-center">
-              <Bot size={24} className="text-[#14213d]" />
-            </div>
-            <div className="text-center">
-              <h3 className="text-lg font-medium text-white mb-2">Start a conversation</h3>
-              <p className="text-white/60">
-                Your AI assistant is ready. Ask anything!
-              </p>
-            </div>
+          <div className="flex flex-col items-center justify-center h-full">
+            <ExamplePrompts 
+              onSelectPrompt={handleSelectPrompt}
+              disabled={!isInitialized}
+            />
           </div>
         ) : (
           messages.map((message) => (
