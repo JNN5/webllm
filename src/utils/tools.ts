@@ -224,13 +224,13 @@ export async function executeTool(toolName: string, args: Record<string, any>) {
 }
 
 export function getToolsPrompt(): string {
-  return `You are an AI assistant with access to browser-based tools. You MUST always respond with valid JSON in the exact format specified below.
+  return `You are an AI assistant with access to browser-based tools.
 
 Available tools:
 ${browserTools.map(tool => `**${tool.name}**: ${tool.description}
 Parameters: ${JSON.stringify(tool.parameters, null, 2)}`).join('\n\n')}
 
-CRITICAL: You MUST ALWAYS respond with a valid JSON object. Never respond with plain text.
+CRITICAL: You MUST respond ONLY with a valid JSON object in this exact format. Do NOT include any text before or after the JSON.
 
 For requests that need tools:
 {
@@ -251,10 +251,10 @@ For requests that don't need tools:
 }
 
 IMPORTANT RULES:
-1. ALWAYS respond with valid JSON only
-2. ALWAYS include "thinking" array with your reasoning steps
-3. Use "tool_calls" array only when tools are needed
-4. ALWAYS include "response" with your final answer
-5. Never include any text outside the JSON object
-6. Think step by step in the "thinking" array`
+1. Respond with ONLY the JSON object, nothing else
+2. Do NOT use <thinking> tags or any other format
+3. ALWAYS include "thinking" array with your reasoning steps
+4. Use "tool_calls" array only when tools are needed
+5. ALWAYS include "response" with your final answer
+6. No text before or after the JSON object`
 }

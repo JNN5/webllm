@@ -158,7 +158,17 @@ CRITICAL INSTRUCTIONS:
 
         // After streaming is complete, try to parse as JSON for structured responses
         try {
-          const parsed = JSON.parse(fullResponse)
+          // First, try to extract JSON from the response if it's mixed format
+          let jsonToparse = fullResponse.trim()
+          
+          // Look for JSON object in the response
+          const jsonMatch = fullResponse.match(/\{[\s\S]*\}/)
+          if (jsonMatch) {
+            jsonToparse = jsonMatch[0]
+            console.log('Extracted JSON from mixed format response:', jsonToparse)
+          }
+          
+          const parsed = JSON.parse(jsonToparse)
           console.log('Parsed JSON response:', parsed)
           
           if (parsed.thinking && Array.isArray(parsed.thinking)) {
@@ -204,7 +214,7 @@ CRITICAL INSTRUCTIONS:
             prev.map((msg) =>
               msg.id === botMessageId ? {
                 ...msg,
-                text: parsed.response || parsed.content || fullResponse,
+                text: parsed.response || parsed.content || 'Tool execution completed',
                 thinking: currentThinking,
                 toolCalls: currentToolCalls,
                 isStreaming: false
