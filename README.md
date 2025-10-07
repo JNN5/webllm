@@ -1,14 +1,21 @@
 # WebLLM Chat App
 
-A client-side AI chat application built with TanStack Start and WebLLM that runs entirely in the browser without any server dependencies.
+A client-side AI chat application that runs entirely in the browser with optimized bundle loading and WebLLM integration.
 
 ## Features
 
 - 🤖 **Local AI**: Runs AI models directly in your browser using WebLLM
 - 🔒 **Privacy**: No data sent to external servers - everything runs locally
-- ⚡ **Fast**: WebGPU-accelerated inference for optimal performance
+- ⚡ **Fast**: WebGPU-accelerated inference with optimized lazy loading
 - 📱 **Responsive**: Works on desktop and mobile devices
-- 🎨 **Modern UI**: Beautiful chat interface built with TailwindCSS
+- 🎨 **Modern UI**: Beautiful glassmorphism chat interface built with TailwindCSS
+
+## Performance Optimizations
+
+- **Lazy Loading**: 5.5MB WebLLM library loads only when needed
+- **Bundle Splitting**: Optimized chunks for faster initial page load
+- **Preloading**: Smart preloading on user interaction
+- **Production Ready**: Optimized GitHub Pages deployment
 
 ## Quick Start
 
