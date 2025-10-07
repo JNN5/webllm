@@ -25,7 +25,8 @@ export function useWebLLM() {
     try {
       const chatEngine = new webllm.MLCEngine()
 
-      await chatEngine.reload('Llama-3.2-3B-Instruct-q4f32_1-MLC')
+      // await chatEngine.reload('Llama-3.2-3B-Instruct-q4f32_1-MLC')
+      await chatEngine.reload('Qwen3-4B-q4f16_1-MLC')
 
       setEngine(chatEngine)
       setIsInitialized(true)
