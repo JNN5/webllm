@@ -1,0 +1,22 @@
+{
+  "projectName": "webllm",
+  "mode": "file-router",
+  "typescript": true,
+  "tailwind": true,
+  "packageManager": "bun",
+  "addOnOptions": {},
+  "git": true,
+  "version": 1,
+  "framework": "react-cra",
+  "chosenAddOns": [
+    "eslint",
+    "start",
+    "mcp",
+    "shadcn",
+    "db",
+    "store",
+    "table",
+    "tanchat",
+    "tanstack-query"
+  ]
+}

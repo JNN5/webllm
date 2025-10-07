@@ -1,0 +1,335 @@
+@import 'tailwindcss';
+
+body {
+  @apply m-0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu',
+    'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+:root {
+  /* Main Theme Colors */
+  --primary-dark: #14213d;
+  --primary-accent: #fca311;
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  
+  /* Glass Effect Variables */
+  --glass-bg: rgba(20, 33, 61, 0.6);
+  --glass-bg-light: rgba(20, 33, 61, 0.4);
+  --glass-border: rgba(252, 163, 17, 0.2);
+  --glass-border-hover: rgba(252, 163, 17, 0.4);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --glass-shadow-hover: 0 12px 40px rgba(0, 0, 0, 0.5);
+  --glass-blur: blur(20px);
+  
+  /* Button Colors */
+  --btn-primary-bg: linear-gradient(135deg, #fca311, #ff9500);
+  --btn-primary-hover: linear-gradient(135deg, #ff9500, #e6820e);
+  --btn-secondary-bg: rgba(252, 163, 17, 0.1);
+  --btn-secondary-hover: rgba(252, 163, 17, 0.2);
+}
+
+/* Glass Card Base */
+.glass-card {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+  border-color: var(--glass-border-hover);
+  box-shadow: 
+    var(--glass-shadow-hover),
+    0 0 20px rgba(252, 163, 17, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Card Variants */
+.glass-card-light {
+  background: var(--glass-bg-light);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  box-shadow: 
+    0 4px 16px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Glass Buttons */
+.glass-btn-primary {
+  background: var(--btn-primary-bg);
+  border: none;
+  border-radius: 12px;
+  color: var(--primary-dark);
+  font-weight: 600;
+  padding: 12px 24px;
+  box-shadow: 
+    0 4px 16px rgba(252, 163, 17, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.glass-btn-primary:hover:not(:disabled) {
+  background: var(--btn-primary-hover);
+  box-shadow: 
+    0 6px 20px rgba(252, 163, 17, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.glass-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.glass-btn-secondary {
+  background: var(--btn-secondary-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-weight: 500;
+  padding: 12px 24px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.glass-btn-secondary:hover:not(:disabled) {
+  background: var(--btn-secondary-hover);
+  border-color: var(--glass-border-hover);
+  transform: translateY(-1px);
+}
+
+.glass-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Chat Specific Styles */
+.chat-container {
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 20px;
+  box-shadow: 
+    var(--glass-shadow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.message-user {
+  background: linear-gradient(135deg, rgba(252, 163, 17, 0.8), rgba(255, 149, 0, 0.6));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(252, 163, 17, 0.3);
+  border-radius: 16px 16px 4px 16px;
+  color: var(--primary-dark);
+  margin-left: auto;
+  max-width: 80%;
+}
+
+.message-assistant {
+  background: var(--glass-bg-light);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px 16px 16px 4px;
+  color: var(--text-primary);
+  margin-right: auto;
+  max-width: 80%;
+}
+
+.input-glass {
+  background: var(--glass-bg-light);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-radius: 12px;
+  color: var(--text-primary);
+  padding: 12px 16px;
+  transition: all 0.3s ease;
+}
+
+.input-glass:focus {
+  outline: none;
+  border-color: var(--glass-border-hover);
+  box-shadow: 0 0 0 3px rgba(252, 163, 17, 0.1);
+}
+
+.input-glass::placeholder {
+  color: var(--text-muted);
+}
+
+/* Scrollbar Styling */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(20, 33, 61, 0.3);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(252, 163, 17, 0.4);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(252, 163, 17, 0.6);
+}
+
+/* Animation Classes */
+.fade-in {
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.slide-up {
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .glass-card {
+    border-radius: 12px;
+    margin: 8px;
+  }
+  
+  .chat-container {
+    border-radius: 16px;
+    margin: 8px;
+  }
+  
+  .message-user,
+  .message-assistant {
+    max-width: 90%;
+    border-radius: 12px;
+    border-radius: 12px 12px 4px 12px;
+  }
+  
+  .message-assistant {
+    border-radius: 12px 12px 12px 4px;
+  }
+  
+  .glass-btn-primary,
+  .glass-btn-secondary {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  
+  /* Improve mobile input area */
+  .input-glass {
+    padding: 10px 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .chat-container {
+    margin: 4px;
+    border-radius: 12px;
+  }
+  
+  .message-user,
+  .message-assistant {
+    max-width: 95%;
+    padding: 12px;
+  }
+  
+  .glass-btn-primary,
+  .glass-btn-secondary {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(252, 163, 17, 0.2) 50%,
+    rgba(255, 255, 255, 0.1) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Focus states for accessibility */
+.glass-btn-primary:focus,
+.glass-btn-secondary:focus,
+.input-glass:focus {
+  outline: 2px solid rgba(252, 163, 17, 0.5);
+  outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --glass-border: rgba(252, 163, 17, 0.6);
+    --glass-border-hover: rgba(252, 163, 17, 0.8);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .glass-card,
+  .glass-btn-primary,
+  .glass-btn-secondary,
+  .input-glass,
+  .fade-in,
+  .slide-up {
+    animation: none;
+    transition: none;
+  }
+}
