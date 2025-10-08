@@ -17,11 +17,14 @@ export interface Tool {
   description: string
   parameters: {
     type: 'object'
-    properties: Record<string, {
-      type: string
-      description: string
-      enum?: string[]
-    }>
+    properties: Record<
+      string,
+      {
+        type: string
+        description: string
+        enum?: string[]
+      }
+    >
     required: string[]
   }
   implementation: (args: Record<string, any>) => Promise<any> | any
@@ -37,10 +40,10 @@ export const browserTools: Tool[] = [
         format: {
           type: 'string',
           description: 'Format for the time (ISO, locale, or timestamp)',
-          enum: ['ISO', 'locale', 'timestamp']
-        }
+          enum: ['ISO', 'locale', 'timestamp'],
+        },
       },
-      required: []
+      required: [],
     },
     implementation: (args) => {
       const now = new Date()
@@ -53,7 +56,7 @@ export const browserTools: Tool[] = [
         default:
           return now.toLocaleString()
       }
-    }
+    },
   },
   {
     name: 'copy_to_clipboard',
@@ -63,10 +66,10 @@ export const browserTools: Tool[] = [
       properties: {
         text: {
           type: 'string',
-          description: 'Text to copy to clipboard'
-        }
+          description: 'Text to copy to clipboard',
+        },
       },
-      required: ['text']
+      required: ['text'],
     },
     implementation: async (args) => {
       try {
@@ -75,7 +78,7 @@ export const browserTools: Tool[] = [
       } catch (error) {
         return { success: false, error: 'Failed to copy to clipboard' }
       }
-    }
+    },
   },
   {
     name: 'read_from_clipboard',
@@ -83,16 +86,19 @@ export const browserTools: Tool[] = [
     parameters: {
       type: 'object',
       properties: {},
-      required: []
+      required: [],
     },
     implementation: async () => {
       try {
         const text = await navigator.clipboard.readText()
         return { success: true, text }
       } catch (error) {
-        return { success: false, error: 'Failed to read from clipboard or permission denied' }
+        return {
+          success: false,
+          error: 'Failed to read from clipboard or permission denied',
+        }
       }
-    }
+    },
   },
   {
     name: 'store_data',
@@ -102,26 +108,27 @@ export const browserTools: Tool[] = [
       properties: {
         key: {
           type: 'string',
-          description: 'Storage key'
+          description: 'Storage key',
         },
         value: {
           type: 'string',
-          description: 'Value to store (will be JSON stringified if object)'
-        }
+          description: 'Value to store (will be JSON stringified if object)',
+        },
       },
-      required: ['key', 'value']
+      required: ['key', 'value'],
     },
     implementation: (args) => {
       try {
-        const valueToStore = typeof args.value === 'object' 
-          ? JSON.stringify(args.value) 
-          : String(args.value)
+        const valueToStore =
+          typeof args.value === 'object'
+            ? JSON.stringify(args.value)
+            : String(args.value)
         localStorage.setItem(`webllm_${args.key}`, valueToStore)
         return { success: true, message: `Data stored with key: ${args.key}` }
       } catch (error) {
         return { success: false, error: 'Failed to store data' }
       }
-    }
+    },
   },
   {
     name: 'retrieve_data',
@@ -131,10 +138,10 @@ export const browserTools: Tool[] = [
       properties: {
         key: {
           type: 'string',
-          description: 'Storage key to retrieve'
-        }
+          description: 'Storage key to retrieve',
+        },
       },
-      required: ['key']
+      required: ['key'],
     },
     implementation: (args) => {
       try {
@@ -142,7 +149,7 @@ export const browserTools: Tool[] = [
         if (value === null) {
           return { success: false, error: 'Key not found' }
         }
-        
+
         // Try to parse as JSON, fallback to string
         try {
           const parsed = JSON.parse(value)
@@ -153,7 +160,7 @@ export const browserTools: Tool[] = [
       } catch (error) {
         return { success: false, error: 'Failed to retrieve data' }
       }
-    }
+    },
   },
   {
     name: 'get_page_info',
@@ -161,7 +168,7 @@ export const browserTools: Tool[] = [
     parameters: {
       type: 'object',
       properties: {},
-      required: []
+      required: [],
     },
     implementation: () => {
       return {
@@ -172,9 +179,9 @@ export const browserTools: Tool[] = [
         language: navigator.language,
         onlineStatus: navigator.onLine,
         screenResolution: `${screen.width}x${screen.height}`,
-        viewportSize: `${window.innerWidth}x${window.innerHeight}`
+        viewportSize: `${window.innerWidth}x${window.innerHeight}`,
       }
-    }
+    },
   },
   {
     name: 'calculate',
@@ -184,10 +191,11 @@ export const browserTools: Tool[] = [
       properties: {
         expression: {
           type: 'string',
-          description: 'Mathematical expression to evaluate (basic operations only)'
-        }
+          description:
+            'Mathematical expression to evaluate (basic operations only)',
+        },
       },
-      required: ['expression']
+      required: ['expression'],
     },
     implementation: (args) => {
       try {
@@ -196,29 +204,29 @@ export const browserTools: Tool[] = [
         if (sanitized !== args.expression) {
           return { success: false, error: 'Invalid characters in expression' }
         }
-        
+
         const result = Function(`"use strict"; return (${sanitized})`)()
         return { success: true, result, expression: args.expression }
       } catch (error) {
         return { success: false, error: 'Invalid mathematical expression' }
       }
-    }
-  }
+    },
+  },
 ]
 
 export async function executeTool(toolName: string, args: Record<string, any>) {
-  const tool = browserTools.find(t => t.name === toolName)
+  const tool = browserTools.find((t) => t.name === toolName)
   if (!tool) {
     throw new Error(`Tool '${toolName}' not found`)
   }
-  
+
   try {
     const result = await tool.implementation(args)
     return { success: true, result }
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : 'Unknown error' 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
     }
   }
 }
@@ -227,8 +235,12 @@ export function getToolsPrompt(): string {
   return `You are an AI assistant with access to browser-based tools.
 
 Available tools:
-${browserTools.map(tool => `**${tool.name}**: ${tool.description}
-Parameters: ${JSON.stringify(tool.parameters, null, 2)}`).join('\n\n')}
+${browserTools
+  .map(
+    (tool) => `**${tool.name}**: ${tool.description}
+Parameters: ${JSON.stringify(tool.parameters, null, 2)}`,
+  )
+  .join('\n\n')}
 
 CRITICAL: You MUST respond ONLY with a valid JSON object in this exact format. Do NOT include any text before or after the JSON.
 
